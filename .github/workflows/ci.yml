@@ -56,7 +56,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3 
 
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
