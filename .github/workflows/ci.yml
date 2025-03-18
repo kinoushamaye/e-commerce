@@ -1,4 +1,4 @@
-name: Intégration Continue
+name: Continuous Integration
 
 on:
   push:
@@ -13,40 +13,58 @@ jobs:
     runs-on: ubuntu-latest
     services:
       zookeeper:
-        image: wurstmeister/zookeeper:3.4.6
+        image: confluentinc/cp-zookeeper:latest
         ports:
           - 2181:2181
+        env:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
       kafka:
-        image: wurstmeister/kafka:2.13-2.7.0
+        image: confluentinc/cp-kafka:latest
         ports:
           - 9092:9092
         env:
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-        options: --health-cmd="echo ruok | nc -w 1 localhost 2181 | grep imok" --health-interval=10s --health-timeout=5s --health-retries=5
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        depends_on:
+          - zookeeper
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-      - name: Set up JDK 11
-        uses: actions/setup-java@v3
-        with:
-          java-version: 11
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
 
-      - name: Build and test ms-orders
-        working-directory: ms-orders
-        run: |
-          ./mvnw clean install
-          ./mvnw test
+    - name: Build with Maven
+      run: mvn clean install
 
-      - name: Build and test ms-stock
-        working-directory: ms-stock
-        run: |
-          ./mvnw clean install
-          ./mvnw test
+    - name: Run tests
+      run: mvn test
 
-      - name: Build and test ms-payments
-        working-directory: ms-payments
-        run: |
-          ./mvnw clean install
-          ./mvnw test
+  build-image:
+    strategy:
+      matrix:
+        service: ["order-service", "payment-service", "inventory-service"]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    needs: [test]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Log in to registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+    - name: Build the Docker image
+      uses: docker/build-push-action@v2
+      with: 
+        context: ${{ matrix.service }}
+        file: ${{ matrix.service }}/Dockerfile
+        push: true
+        tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:${{ github.ref_name }}
