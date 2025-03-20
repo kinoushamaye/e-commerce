@@ -29,6 +29,20 @@ jobs:
           KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
         depends_on:
           - zookeeper
+      mysql:
+        image: mysql:8
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/${{ secrets.MYSQL_DATABASE }}
+      SPRING_DATASOURCE_USERNAME: ${{ secrets.MYSQL_USER }}
+      SPRING_DATASOURCE_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
     steps:
     - uses: actions/checkout@v3
 
@@ -37,6 +51,22 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+
+    - name: Wait for Kafka to be ready
+      run: |
+        while ! nc -z localhost 9092; do
+          echo "Waiting for Kafka to be ready..."
+          sleep 3
+        done
+        echo "Kafka is ready!"
+
+    - name: Wait for MySQL to be ready
+      run: |
+        while ! mysqladmin ping -h localhost --silent; do
+          echo "Waiting for MySQL to be ready..."
+          sleep 3
+        done
+        echo "MySQL is ready!"
 
     - name: Build with Maven
       run: mvn clean install
@@ -56,7 +86,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     
     steps:
-    - uses: actions/checkout@v3 
+    - uses: actions/checkout@v3
 
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
