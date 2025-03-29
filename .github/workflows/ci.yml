@@ -1,70 +1,87 @@
-name: Continuous Integration
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: 
-      - main
+    branches: [ main, ci_cd ]
+    paths-ignore:
+      - 'README.md'
+      - 'documentation/**'
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
+
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '18.x'
 
 jobs:
-  test:
+  build:
+    name: Build Backend & Frontend
     runs-on: ubuntu-latest
-    services:
-      zookeeper:
-        image: confluentinc/cp-zookeeper:latest
-        ports:
-          - 2181:2181
-        env:
-          ZOOKEEPER_CLIENT_PORT: 2181
-          ZOOKEEPER_TICK_TIME: 2000
-      kafka:
-        image: confluentinc/cp-kafka:latest
-        ports:
-          - 9092:9092
-        env:
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-        depends_on:
-          - zookeeper
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Set up JDK 17
+    # Backend - Spring Boot (Maven)
+    - name: Set up Java
       uses: actions/setup-java@v3
       with:
-        java-version: '17'
+        java-version: ${{ env.JAVA_VERSION }}
         distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository  # Répertoire de cache Maven
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
 
     - name: Build with Maven
-      run: mvn clean install
+      run: mvn clean package -DskipTests=true -Dspring.jpa.hibernate.ddl-auto=none
 
-    - name: Run tests
-      run: mvn test
+    # Frontend - Angular
+    - name: Set up Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json  # Spécifie le chemin pour le cache
 
-  build-image:
-    strategy:
-      matrix:
-        service: ["order-service", "payment-service", "inventory-service"]
+    - name: Cache Node.js dependencies
+      uses: actions/cache@v3
+      with:
+        path: frontend/node_modules  # Répertoire pour les dépendances frontend
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Install frontend dependencies
+      run: npm ci
+      working-directory: frontend
+
+    - name: Build frontend
+      run: npm run build -- --prod
+      working-directory: frontend
+
+  test:
+    name: Run Tests
+    needs: build
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-    needs: [test]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
 
-    - name: Log in to registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
 
-    - name: Build the Docker image
-      uses: docker/build-push-action@v2
-      with: 
-        context: ${{ matrix.service }}
-        file: ${{ matrix.service }}/Dockerfile
-        push: true
-        tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:${{ github.ref_name }}
+    - name: Run Unit Tests
+      run: mvn test -Dspring.jpa.hibernate.ddl-auto=none
+
+    - name: Run Integration Tests
+      run: mvn verify -Pintegration-tests
+      env:
+        KAFKA_BOOTSTRAP_SERVERS: localhost:9092
