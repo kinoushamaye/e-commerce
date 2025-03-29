@@ -20,7 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Backend - Spring Boot
+    # Backend - Spring Boot (Maven)
     - name: Set up Java
       uses: actions/setup-java@v3
       with:
@@ -28,16 +28,32 @@ jobs:
         distribution: 'temurin'
         cache: 'maven'
 
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository  # Répertoire de cache Maven
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
     - name: Build with Maven
       run: mvn clean package -DskipTests=true -Dspring.jpa.hibernate.ddl-auto=none
 
-    # Frontend - Angular (si applicable)
+    # Frontend - Angular
     - name: Set up Node
       uses: actions/setup-node@v3
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: 'frontend/package-lock.json'
+        cache-dependency-path: frontend/package-lock.json  # Spécifie le chemin pour le cache
+
+    - name: Cache Node.js dependencies
+      uses: actions/cache@v3
+      with:
+        path: frontend/node_modules  # Répertoire pour les dépendances frontend
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
 
     - name: Install frontend dependencies
       run: npm ci
@@ -64,3 +80,8 @@ jobs:
 
     - name: Run Unit Tests
       run: mvn test -Dspring.jpa.hibernate.ddl-auto=none
+
+    - name: Run Integration Tests
+      run: mvn verify -Pintegration-tests
+      env:
+        KAFKA_BOOTSTRAP_SERVERS: localhost:9092
