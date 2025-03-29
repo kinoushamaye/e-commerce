@@ -37,15 +37,18 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        cache-dependency-path: 'frontend/package-lock.json'  # Spécifie le chemin
 
     - name: Install Angular CLI
       run: npm install -g @angular/cli
       working-directory: frontend
 
-    - name: Install dependencies and build
-      run: |
-        npm install
-        npm run build -- --prod
+    - name: Install frontend dependencies
+      run: npm ci  # Utilise npm ci au lieu de npm install
+      working-directory: frontend
+
+    - name: Build frontend
+      run: npm run build -- --prod
       working-directory: frontend
 
     - name: Upload artifacts
@@ -70,7 +73,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
     - uses: actions/download-artifact@v4
       with:
         name: build-artifacts
@@ -87,26 +89,3 @@ jobs:
       run: mvn verify -Pintegration-tests
       env:
         KAFKA_BOOTSTRAP_SERVERS: localhost:9092
-
-  deploy:
-    name: Deploy to Test
-    needs: [build, test]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/download-artifact@v4
-      with:
-        name: build-artifacts
-
-    - name: Deploy Backend
-      run: echo "Ici ajouter la commande de déploiement backend"
-      # Exemple pour Heroku :
-      # run: heroku deploy:jar target/*.jar --app votre-app
-
-    - name: Deploy Frontend
-      run: echo "Ici ajouter la commande de déploiement frontend"
-      working-directory: frontend
-      # Exemple pour Netlify :
-      # run: npx netlify deploy --dir=dist --prod
