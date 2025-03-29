@@ -1,100 +1,118 @@
-name: Continuous Integration
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: 
-      - main
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'README.md'
+      - 'documentation/**'
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
+
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '18.x'
 
 jobs:
+  build:
+    name: Build Backend & Frontend
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # Backend - Spring Boot
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Build with Maven
+      run: mvn clean package -DskipTests=true
+
+    # Frontend - Angular
+    - name: Set up Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install Angular CLI
+      run: npm install -g @angular/cli
+      working-directory: frontend
+
+    - name: Install dependencies and build
+      run: |
+        npm install
+        npm run build -- --prod
+      working-directory: frontend
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: |
+          target/*.jar
+          frontend/dist/
+
   test:
+    name: Run Tests
+    needs: build
     runs-on: ubuntu-latest
     services:
-      zookeeper:
-        image: confluentinc/cp-zookeeper:latest
-        ports:
-          - 2181:2181
-        env:
-          ZOOKEEPER_CLIENT_PORT: 2181
-          ZOOKEEPER_TICK_TIME: 2000
       kafka:
-        image: confluentinc/cp-kafka:latest
+        image: bitnami/kafka
         ports:
           - 9092:9092
         env:
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-        depends_on:
-          - zookeeper
-      mysql:
-        image: mysql:8
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
-          MYSQL_USER: ${{ secrets.MYSQL_USER }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 5
-    env:
-      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/${{ secrets.MYSQL_DATABASE }}
-      SPRING_DATASOURCE_USERNAME: ${{ secrets.MYSQL_USER }}
-      SPRING_DATASOURCE_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-    steps:
-    - uses: actions/checkout@v3
+          KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
 
-    - name: Set up JDK 17
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
+
+    - name: Set up Java
       uses: actions/setup-java@v3
       with:
-        java-version: '17'
-        distribution: 'temurin'
+        java-version: ${{ env.JAVA_VERSION }}
 
-    - name: Wait for Kafka to be ready
-      run: |
-        while ! nc -z localhost 9092; do
-          echo "Waiting for Kafka to be ready..."
-          sleep 3
-        done
-        echo "Kafka is ready!"
-
-    - name: Wait for MySQL to be ready
-      run: |
-        while ! mysqladmin ping -h localhost --silent; do
-          echo "Waiting for MySQL to be ready..."
-          sleep 3
-        done
-        echo "MySQL is ready!"
-
-    - name: Build with Maven
-      run: mvn clean install
-
-    - name: Run tests
+    - name: Run Unit Tests
       run: mvn test
 
-  build-image:
-    strategy:
-      matrix:
-        service: ["order-service", "payment-service", "inventory-service"]
+    - name: Run Integration Tests
+      run: mvn verify -Pintegration-tests
+      env:
+        KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+
+  deploy:
+    name: Deploy to Test
+    needs: [build, test]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-    needs: [test]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
 
-    - name: Log in to registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+    # Exemple de déploiement sur Heroku (adaptez à votre besoin)
+    - name: Deploy Backend to Heroku
+      uses: akhileshns/heroku-deploy@v3.12.12
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "your-heroku-app-name"
+        heroku_email: "your-email@example.com"
+        usedocker: false
+        appdir: "."
 
-    - name: Build the Docker image
-      uses: docker/build-push-action@v2
-      with: 
-        context: ${{ matrix.service }}
-        file: ${{ matrix.service }}/Dockerfile
-        push: true
-        tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:${{ github.ref_name }}
+    # Alternative pour déployer le frontend sur Netlify
+    - name: Deploy Frontend to Netlify
+      uses: netlify/actions/cli@master
+      with:
+        args: deploy --dir=frontend/dist --prod
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
