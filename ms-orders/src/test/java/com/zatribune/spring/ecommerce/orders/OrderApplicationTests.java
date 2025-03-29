@@ -5,7 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@ActiveProfiles("test")  // Charge application-test.yml
+@ActiveProfiles("test")  // Charge la config de test si besoin
 class OrderApplicationTests {
 
     @Test
