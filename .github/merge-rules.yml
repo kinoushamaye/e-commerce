@@ -1,0 +1,9 @@
+rules:
+  - base: "develop"
+    required_approvals: 1
+    checks: [ci-build, sonarcloud]
+  
+  - base: "main"
+    required_approvals: 2
+    checks: [release-check]
+    required_source: "develop"  # Bloque les merges non-originaires de develop

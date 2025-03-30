@@ -1,0 +1,11 @@
+name: Check PR Target
+on: pull_request_target
+jobs:
+  validate-target:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject PRs to main not from develop
+        if: github.base_ref == 'main' && github.head_ref != 'develop'
+        run: |
+          echo "❌ Les PR vers main doivent venir de develop" >&2
+          exit 1
