@@ -85,3 +85,4 @@ jobs:
       run: mvn verify -Pintegration-tests
       env:
         KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+
