@@ -19,31 +19,28 @@
         <module>ms-stock</module>
     </modules>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.6.3</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
     <properties>
         <java.version>17</java.version>
-        <spring-boot.version>3.2.0</spring-boot.version>
-        <spring-kafka.version>3.1.1</spring-kafka.version>
-        <jacoco.version>0.8.10</jacoco.version>
-        <testcontainers.version>1.19.3</testcontainers.version>
-        <maven-failsafe-plugin.version>3.1.2</maven-failsafe-plugin.version>
+        <kafka.version>3.2.0</kafka.version>
+        <testcontainers.version>1.16.3</testcontainers.version>
+        <jacoco.version>0.8.8</jacoco.version>
+        <maven-failsafe-plugin.version>3.0.0-M5</maven-failsafe-plugin.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Boot BOM -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            
             <!-- Spring Kafka -->
             <dependency>
                 <groupId>org.springframework.kafka</groupId>
                 <artifactId>spring-kafka</artifactId>
-                <version>${spring-kafka.version}</version>
+                <version>${kafka.version}</version>
             </dependency>
             
             <!-- TestContainers -->
@@ -64,16 +61,11 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Dépendances de test communes -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.junit.vintage</groupId>
-                    <artifactId>junit-vintage-engine</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 
@@ -82,7 +74,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
                 <configuration>
                     <excludes>
                         <exclude>
@@ -93,6 +84,15 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <goals>install</goals>
+                </configuration>
+            </plugin>
+
+            <!-- Plugin JaCoCo pour la couverture de code -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -118,6 +118,10 @@
     <profiles>
         <profile>
             <id>integration-tests</id>
+            <properties>
+                <kafka.bootstrap.servers>localhost:9092</kafka.bootstrap.servers>
+            </properties>
+            
             <build>
                 <plugins>
                     <plugin>
