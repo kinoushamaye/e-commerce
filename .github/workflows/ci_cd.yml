@@ -42,8 +42,6 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        service: ["ms-orders", "ms-payments", "ms-stock"]
     
     steps:
     - uses: actions/checkout@v3
