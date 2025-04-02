@@ -1,0 +1,80 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  SONAR_HOST_URL: https://sonarcloud.io/project/overview?id=kinoushamaye_e-commerce
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      zookeeper:
+        image: confluentinc/cp-zookeeper:7.4.0
+        ports: [2181:2181]
+        env:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
+
+      kafka:
+        image: confluentinc/cp-kafka:7.4.0
+        ports: [9092:9092]
+        env:
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Run tests
+      run: mvn test -Dspring.kafka.bootstrap-servers=localhost:9092
+
+    - name: SonarQube Analysis
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'  # Exécution seulement sur main/develop
+      run: |
+        mvn sonar:sonar \
+          -Dsonar.projectKey=kinoushamaye_e-commerce \
+          -Dsonar.organization=mon-projet \
+          -Dsonar.login=${{ secrets.new_token_order }}
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ["ms-orders", "ms-payments", "ms-stock"]
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: ${{ matrix.service }}
+        file: ${{ matrix.service }}/Dockerfile
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
+          ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:${{ github.sha }}
+
+    # Optionnel : Déploiement automatique après build
+    - name: Deploy to Kubernetes (exemple)
+      if: github.ref == 'refs/heads/main'  # Seulement sur main
+      run: |
+        kubectl apply -f ${{ matrix.service }}/k8s-deployment.yaml
+      env:
+        KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
