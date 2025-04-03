@@ -65,8 +65,8 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
-        context: ./${{ matrix.service }}  # Corrige le chemin ici
-        file: ./${{ matrix.service }}/Dockerfile  # Vérifie qu'il existe
+        context: /${{ matrix.service }}  # Corrige le chemin ici
+        file: /${{ matrix.service }}/Dockerfile  # Vérifie qu'il existe
         push: true
         tags: |
           ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
