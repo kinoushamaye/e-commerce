@@ -54,7 +54,7 @@ jobs:
     strategy:
       matrix:
         service: ["ms-orders", "ms-payments", "ms-stock"]
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -65,6 +65,16 @@ jobs:
       run: |
         echo "Listing repository structure..."
         ls -la
+
+    - name: Verify context exists
+      run: |
+        echo "Checking context directory: ${{ matrix.service }}"
+        if [ -d "${{ matrix.service }}" ]; then
+          echo "Context directory '${{ matrix.service }}' exists."
+        else
+          echo "Error: Context directory '${{ matrix.service }}' does not exist."
+          exit 1
+        fi
 
     - name: Verify Dockerfiles exist
       run: |
