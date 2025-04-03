@@ -59,10 +59,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Debug Repository Structure
+      run: |
+        echo "Listing repository structure..."
+        ls -la
+
     - name: Verify Dockerfiles exist
       run: |
         echo "Checking Dockerfile for ${{ matrix.service }}"
-        ls -la ./${{ matrix.service }}/Dockerfile
+        ls -la ./${{ matrix.service }} || echo "Directory ${{ matrix.service }} not found!"
+        ls -la ./${{ matrix.service }}/Dockerfile || echo "Dockerfile not found in ${{ matrix.service }}!"
 
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
