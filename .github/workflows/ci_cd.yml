@@ -6,8 +6,6 @@ on:
   pull_request:
     branches: [main, develop]
 
-env:
-  SONAR_HOST_URL: https://sonarcloud.io/project/overview?id=kinoushamaye_e-commerce
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -41,12 +39,13 @@ jobs:
       run: mvn test -Dspring.kafka.bootstrap-servers=localhost:9092
 
     - name: SonarQube Analysis
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'  # Exécution seulement sur main/develop
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       run: |
         mvn sonar:sonar \
+          -Dsonar.host.url=https://sonarcloud.io \
           -Dsonar.projectKey=kinoushamaye_e-commerce \
-          -Dsonar.organization=mon-projet \
-          -Dsonar.login=${{ secrets.new_token_order }}
+          -Dsonar.organization=kinoushamaye \
+          -Dsonar.token=${{ secrets.new_token_order }}
 
   build-and-push:
     needs: test
@@ -71,9 +70,8 @@ jobs:
           ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
           ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:${{ github.sha }}
 
-    # Optionnel : Déploiement automatique après build
-    - name: Deploy to Kubernetes (exemple)
-      if: github.ref == 'refs/heads/main'  # Seulement sur main
+    - name: Deploy to Kubernetes
+      if: github.ref == 'refs/heads/main'
       run: |
         kubectl apply -f ${{ matrix.service }}/k8s-deployment.yaml
       env:
