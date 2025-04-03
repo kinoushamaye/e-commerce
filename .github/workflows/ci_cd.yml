@@ -42,9 +42,9 @@ jobs:
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       run: |
         mvn sonar:sonar \
-          -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.projectKey=kinoushamaye_e-commerce
-          -Dsonar.organization=mon-projet
+          -Dsonar.host.url=https://sonarcloud.io  \
+          -Dsonar.projectKey=kinoushamaye_e-commerce  \
+          -Dsonar.organization=mon-projet  \
           -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
   build-and-push:
