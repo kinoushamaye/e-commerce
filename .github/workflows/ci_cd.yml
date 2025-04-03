@@ -58,11 +58,13 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
     - name: Debug Repository Structure
       run: |
         echo "Listing repository structure..."
-        ls -la  # Liste la structure du dépôt à la racine
+        ls -la
 
     - name: Verify Dockerfiles exist
       run: |
