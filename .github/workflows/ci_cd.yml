@@ -59,14 +59,19 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Verify Dockerfiles exist
+      run: |
+        echo "Checking Dockerfile for ${{ matrix.service }}"
+        ls -la ./${{ matrix.service }}/Dockerfile
+
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
-        context: /${{ matrix.service }}  # Corrige le chemin ici
-        file: /${{ matrix.service }}/Dockerfile  # Vérifie qu'il existe
+        context: ./${{ matrix.service }}
+        file: ./${{ matrix.service }}/Dockerfile
         push: true
         tags: |
           ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
@@ -75,6 +80,7 @@ jobs:
     - name: Deploy to Kubernetes
       if: github.ref == 'refs/heads/main'
       run: |
-        kubectl apply -f ./${{ matrix.service }}/k8s-deployment.yaml
+        echo "$KUBE_CONFIG" > kubeconfig.yaml
+        kubectl --kubeconfig=kubeconfig.yaml apply -f ./${{ matrix.service }}/k8s-deployment.yaml
       env:
         KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
