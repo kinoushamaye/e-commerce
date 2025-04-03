@@ -62,7 +62,7 @@ jobs:
     - name: Debug Repository Structure
       run: |
         echo "Listing repository structure..."
-        ls -la
+        ls -la  # Liste la structure du dépôt à la racine
 
     - name: Verify Dockerfiles exist
       run: |
