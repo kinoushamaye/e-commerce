@@ -89,7 +89,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: ${{ matrix.service }}
-        file: ${{ matrix.service }}/Dockerfile
+        file: ${{ matrix.service }}/Dockerfile 
         push: true
         tags: |
           ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
