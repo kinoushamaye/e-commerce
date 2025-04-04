@@ -26,27 +26,61 @@ jobs:
           KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-    - name: Set up JDK 11
+    - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
 
     - name: Run tests
       run: mvn test -Dspring.kafka.bootstrap-servers=localhost:9092
 
+    - name: SonarQube Analysis
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+      run: |
+        mvn sonar:sonar \
+          -Dsonar.host.url=https://sonarcloud.io  \
+          -Dsonar.projectKey=kinoushamaye_e-commerce  \
+          -Dsonar.organization=mon-projet  \
+          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ["ms-orders", "ms-payments", "ms-stock"]
-    
+        service: ["ms-orders", "ms-payment", "ms-stock"]
+
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Debug Repository Structure
+      run: |
+        echo "Listing repository structure..."
+        ls -la
+
+    - name: Verify context exists
+      run: |
+        echo "Checking context directory: ${{ matrix.service }}"
+        if [ -d "${{ matrix.service }}" ]; then
+          echo "Context directory '${{ matrix.service }}' exists."
+        else
+          echo "Error: Context directory '${{ matrix.service }}' does not exist."
+          exit 1
+        fi
+
+    - name: Verify Dockerfiles exist
+      run: |
+        echo "Checking Dockerfile for ${{ matrix.service }}"
+        ls -la ./${{ matrix.service }} || echo "Directory ${{ matrix.service }} not found!"
+        ls -la ./${{ matrix.service }}/DockerFile || echo "DockerFile not found in ${{ matrix.service }}!"
 
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -55,8 +89,16 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: ${{ matrix.service }}
-        file: ${{ matrix.service }}/Dockerfile
+        file: ${{ matrix.service }}/DockerFile 
         push: true
         tags: |
           ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
           ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:${{ github.sha }}
+
+    - name: Deploy to Kubernetes
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "$KUBE_CONFIG" > kubeconfig.yaml
+        kubectl --kubeconfig=kubeconfig.yaml apply -f ./${{ matrix.service }}/k8s-deployment.yaml
+      env:
+        KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
