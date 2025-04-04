@@ -35,12 +35,12 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
-    - name: Build all modules from root (incl. commons)
-        run: mvn clean install -DskipTests
-
 
     - name: Run tests
       run: mvn test -Dspring.kafka.bootstrap-servers=localhost:9092
+    
+    - name: Build all modules from root (incl. commons)
+      run: mvn clean install -DskipTests
 
     - name: SonarQube Analysis
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
