@@ -1,7 +1,0 @@
-/Users/Proprietaire/Downloads/spring-kafka-microservices-master/ms-stock/src/main/java/com/zatribune/spring/ecommerce/stock/StockApplication.java
-/Users/Proprietaire/Downloads/spring-kafka-microservices-master/ms-stock/src/main/java/com/zatribune/spring/ecommerce/stock/db/DevBootstrap.java
-/Users/Proprietaire/Downloads/spring-kafka-microservices-master/ms-stock/src/main/java/com/zatribune/spring/ecommerce/stock/db/entities/Product.java
-/Users/Proprietaire/Downloads/spring-kafka-microservices-master/ms-stock/src/main/java/com/zatribune/spring/ecommerce/stock/db/repository/ProductRepository.java
-/Users/Proprietaire/Downloads/spring-kafka-microservices-master/ms-stock/src/main/java/com/zatribune/spring/ecommerce/stock/listener/OrderListener.java
-/Users/Proprietaire/Downloads/spring-kafka-microservices-master/ms-stock/src/main/java/com/zatribune/spring/ecommerce/stock/service/OrderService.java
-/Users/Proprietaire/Downloads/spring-kafka-microservices-master/ms-stock/src/main/java/com/zatribune/spring/ecommerce/stock/service/OrderServiceImpl.java
