@@ -31,8 +31,8 @@ public class OrderServiceImpl implements OrderService{
         log.info("reserve order [{}] , for customer[{}]",order.getId(), customer);
         if (order.getPrice() < customer.getAmountAvailable()) {
             order.setStatus(ACCEPT);
-            customer.setAmountReserved(customer.getAmountReserved() + order.getPrice());
-            customer.setAmountAvailable(customer.getAmountAvailable() - order.getPrice());
+            customer.setAmountReserved(customer.getAmountReserved() + (int) Math.round(order.getPrice()));
+            customer.setAmountAvailable(customer.getAmountAvailable() - (int) Math.round(order.getPrice()));
         } else {
             order.setStatus(REJECTED);
         }
@@ -47,11 +47,11 @@ public class OrderServiceImpl implements OrderService{
         Customer customer = repository.findById(order.getCustomerId()).orElseThrow();
         log.info("confirm order [{}] , for customer[{}]",order.getId(), customer);
         if (order.getStatus().equals(CONFIRMED)) {
-            customer.setAmountReserved(customer.getAmountReserved() - order.getPrice());
+            customer.setAmountReserved(customer.getAmountReserved() - (int) Math.round(order.getPrice()));
             repository.save(customer);
         } else if (order.getStatus().equals(ROLLBACK) && !order.getSource().equals(SOURCE)) {
-            customer.setAmountReserved(customer.getAmountReserved() - order.getPrice());
-            customer.setAmountAvailable(customer.getAmountAvailable() + order.getPrice());
+            customer.setAmountReserved(customer.getAmountReserved() - (int) Math.round(order.getPrice()));
+            customer.setAmountAvailable(customer.getAmountAvailable() + (int) Math.round(order.getPrice()));
             repository.save(customer);
         }
 

@@ -1,0 +1,5 @@
+com/zatribune/spring/ecommerce/orders/service/OrderServiceImpl.class
+com/zatribune/spring/ecommerce/orders/OrderApplication.class
+com/zatribune/spring/ecommerce/orders/service/OrderService.class
+com/zatribune/spring/ecommerce/orders/controller/OrderController.class
+com/zatribune/spring/ecommerce/orders/config/KafkaConfig.class

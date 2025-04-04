@@ -1,6 +1,7 @@
-domain/KafkaIds.class
+domain/Order$OrderBuilder.class
 domain/OrderSource.class
 domain/Topics.class
 domain/OrderStatus.class
 domain/Order.class
+domain/KafkaIds.class
 domain/KafkaGroupIds.class
