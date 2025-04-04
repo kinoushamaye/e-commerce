@@ -22,6 +22,11 @@ public class Product {
     private int availableItems;
     private int reservedItems;
 
+    // Calcul du nombre d'articles en stock
+    public int getTotalItems() {
+        return availableItems + reservedItems;
+    }
+
     @Override
     public String toString() {
         return "Product{" +
@@ -29,6 +34,7 @@ public class Product {
                 ", name='" + name + '\'' +
                 ", availableItems=" + availableItems +
                 ", reservedItems=" + reservedItems +
+                ", totalItems=" + getTotalItems() +
                 '}';
     }
 }
