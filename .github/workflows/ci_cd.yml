@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ["ms-orders", "ms-payments", "ms-stock"]
+        service: ["ms-orders", "ms-payment", "ms-stock"]
 
     steps:
     - name: Checkout repository
