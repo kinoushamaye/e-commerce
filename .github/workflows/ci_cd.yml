@@ -80,7 +80,7 @@ jobs:
       run: |
         echo "Checking Dockerfile for ${{ matrix.service }}"
         ls -la ./${{ matrix.service }} || echo "Directory ${{ matrix.service }} not found!"
-        ls -la ./${{ matrix.service }}/Dockerfile || echo "Dockerfile not found in ${{ matrix.service }}!"
+        ls -la ./${{ matrix.service }}/DockerFile || echo "DockerFile not found in ${{ matrix.service }}!"
 
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -89,7 +89,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: ${{ matrix.service }}
-        file: ${{ matrix.service }}/Dockerfile 
+        file: ${{ matrix.service }}/DockerFile 
         push: true
         tags: |
           ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
