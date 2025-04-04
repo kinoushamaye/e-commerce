@@ -76,7 +76,7 @@ jobs:
           exit 1
         fi
 
-    - name: Verify Dockerfiles exist
+    - name: Verify Dockerfiles exist 
       run: |
         echo "Checking Dockerfile for ${{ matrix.service }}"
         ls -la ./${{ matrix.service }} || echo "Directory ${{ matrix.service }} not found!"
@@ -84,6 +84,9 @@ jobs:
 
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+    - name: Build app with Maven
+      run: mvn clean package -DskipTests
+      working-directory: ${{ matrix.service }}
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
