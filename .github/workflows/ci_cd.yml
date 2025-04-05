@@ -39,7 +39,7 @@ jobs:
     - name: Run tests
       run: mvn test -Dspring.kafka.bootstrap-servers=localhost:9092
     
-    - name: Build all modules from root (incl. commons)
+    - name: Build all modules from root
       run: mvn clean install -DskipTests
 
     - name: SonarQube Analysis
