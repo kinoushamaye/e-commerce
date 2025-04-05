@@ -5,10 +5,10 @@
     <parent>
         <groupId>com.zatribune.spring</groupId>
         <artifactId>ecommerce</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.25.1-SNAPSHOT</version>
     </parent>
     <artifactId>ms-orders</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.25.1-SNAPSHOT</version>
     <description>Orders Microservice (Orchestrator)</description>
     <properties>
         <java.version>11</java.version>
@@ -17,7 +17,7 @@
         <dependency>
             <groupId>com.zatribune.spring</groupId>
             <artifactId>commons</artifactId>
-            <version>1.0-SNAPSHOT</version> <!-- ou ${project.version} -->
+            <version>1.25.1-SNAPSHOT</version> <!-- ou ${project.version} -->
         </dependency>
        <dependency>
             <groupId>org.projectlombok</groupId>
