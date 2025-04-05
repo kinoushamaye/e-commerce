@@ -40,10 +40,11 @@
 
     <repositories>
         <repository>
-            <id>your-repository-id</id>
-            <url>https://your-repository-url</url>
+            <id>github-repository</id>
+            <url>https://maven.pkg.github.com/kinoushamaye/e-commerce</url>
         </repository>
     </repositories>
+
 
     <build>
         <plugins>
