@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-    <project xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -8,9 +8,7 @@
     <artifactId>ecommerce</artifactId>
     <packaging>pom</packaging>
     <version>1.25.1-SNAPSHOT</version>
-    <description>
-        An E-commerce Microservices Application that demonstrates Event-driven architecture using Kafka.
-    </description>
+    <description>An E-commerce Microservices Application that demonstrates Event-driven architecture using Kafka.</description>
 
     <modules>
         <module>commons</module>
@@ -18,11 +16,13 @@
         <module>ms-payment</module>
         <module>ms-stock</module>
     </modules>
+    
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.6.3</version>
-        <relativePath/> </parent>
+        <relativePath/>
+    </parent>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -30,13 +30,20 @@
     </properties>
 
     <dependencies>
-       <dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.28</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>your-repository-id</id>
+            <url>https://your-repository-url</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
@@ -47,9 +54,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <configuration><goals>
-                        install
-                    </goals></configuration>
+                <configuration>
+                    <goals>
+                        <goal>install</goal>
+                    </goals>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
