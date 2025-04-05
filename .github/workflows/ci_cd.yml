@@ -91,16 +91,6 @@ jobs:
       run: mvn clean package -DskipTests
       working-directory: ${{ matrix.service }}
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: ${{ matrix.service }}
-        file: ${{ matrix.service }}/DockerFile 
-        push: true
-        tags: |
-          ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
-          ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:${{ github.sha }}
-
     - name: Deploy to Kubernetes
       if: github.ref == 'refs/heads/main'
       run: |
