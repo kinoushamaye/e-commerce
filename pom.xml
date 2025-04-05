@@ -38,14 +38,6 @@
         </dependency>
     </dependencies>
 
-    <repositories>
-        <repository>
-            <id>github-repository</id>
-            <url>https://maven.pkg.github.com/kinoushamaye/e-commerce</url>
-        </repository>
-    </repositories>
-
-
     <build>
         <plugins>
             <plugin>
