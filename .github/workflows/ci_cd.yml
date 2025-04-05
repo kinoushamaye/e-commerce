@@ -36,24 +36,11 @@ jobs:
         distribution: 'temurin'
         cache: 'maven'
 
-    - name: Set up Maven settings
-      run: |
-        mkdir -p ~/.m2
-        echo "<settings>
-                <servers>
-                    <server>
-                        <id>your-repository-id</id>
-                        <username>${{ secrets.MAVEN_USERNAME }}</username>
-                        <password>${{ secrets.MAVEN_PASSWORD }}</password>
-                    </server>
-                </servers>
-              </settings>" > ~/.m2/settings.xml
-
     - name: Run tests
       run: mvn test -Dspring.kafka.bootstrap-servers=localhost:9092
-
+    
     - name: Build all modules from root
-      run: mvn clean install -DskipTests -U
+      run: mvn clean install -DskipTests
 
     - name: SonarQube Analysis
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
@@ -87,7 +74,7 @@ jobs:
         echo "Checking context directory: ${{ matrix.service }}"
         if [ -d "${{ matrix.service }}" ]; then
           echo "Context directory '${{ matrix.service }}' exists."
-        else:
+        else
           echo "Error: Context directory '${{ matrix.service }}' does not exist."
           exit 1
         fi
@@ -100,7 +87,6 @@ jobs:
 
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
     - name: Build app with Maven
       run: mvn clean package -DskipTests
       working-directory: ${{ matrix.service }}
@@ -109,7 +95,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: ${{ matrix.service }}
-        file: ${{ matrix.service }}/DockerFile
+        file: ${{ matrix.service }}/DockerFile 
         push: true
         tags: |
           ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
